@@ -1,11 +1,12 @@
-// associativity of matrix multiplication
+// Associativity of matrix multiplication
 
 type Pos = x | 0 < x witness 1
 const N : Pos
 type Index = x | 0 <= x < N
 
-type Matrix = Index -> Index -> int // todo make this int
+type Matrix = Index -> Index -> int
 
+// We assume functional extensionality as an axiom
 lemma FunEq<X, Y>(f: X -> Y, g: X -> Y)
     requires forall x :: f(x) == g(x) 
     ensures f == g 
@@ -37,18 +38,10 @@ function method mult(m1: Matrix, m2: Matrix): Matrix
         Sum((k: Index) => m1(x)(k) * m2(k)(y)))
 }
 
-lemma mult_def(m1: Matrix, m2: Matrix, x: Index, y: Index)
-    ensures mult(m1, m2)(x)(y) == Sum((k: Index) => m1(x)(k) * m2(k)(y))
-    {}
-
 lemma distr_add_n(f: Index -> int, g: Index -> int, n: nat)
     requires n <= N
     ensures Sum_n(f, n) + Sum_n(g, n) == Sum_n((i: Index) => f(i) + g(i), n)    // Sum(f) + Sum(g) == Sum(f0(f, g))      f0(l0, l1)[x] == l0(x) + l1(x)
 {}
-
-lemma distr_add(f: Index -> int, g: Index -> int) 
-    ensures Sum(f) + Sum(g) == Sum((i: Index) => f(i) + g(i))    // Sum(f) + Sum(g) == Sum(f0(f, g))      f0(l0, l1)[x] == l0(x) + l1(x)
-{ distr_add_n(f, g, N); }
 
 lemma distr_mult_n(f: Index -> int, n: nat, x: int) 
     requires n <= N
@@ -109,36 +102,6 @@ lemma sum_assoc(m: Matrix)
             Sum_n((l: Index) => Sum_n((k: Index) => m(k)(l), N), N);
             == { FunEq((l: Index) => Sum((k: Index) => m(k)(l)), (l: Index) => Sum_n((k: Index) => m(k)(l), N)); }
             Sum((l: Index) => Sum((k: Index) => m(k)(l)));
-        }
-    }
-
-lemma sum_assoc_mult_useless(m1: Matrix, m2: Matrix, m3: Matrix) 
-    ensures Sum((k: Index) => Sum((l: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l))) == Sum((l: Index) => Sum((k: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)))
-    {
-        var m := (k1: Index) => (l1: Index) => m1(k1)(l1) * m2(k1)(l1) * m3(k1)(l1);
-        calc {
-            Sum((k: Index) => Sum((l: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)));
-            == { 
-                forall k: Index
-                    ensures ((l: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)) == ((l: Index) => m(k)(l))
-                    {
-                        FunEq((l: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l), (l: Index) => m(k)(l));
-                    }
-                FunEq((k: Index) => Sum((l: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)), (k: Index) => Sum((l: Index) => m(k)(l)));
-               }
-            Sum((k: Index) => Sum((l: Index) => m(k)(l)));
-            == { sum_assoc(m); }
-            Sum((l: Index) => Sum((k: Index) => m(k)(l)));
-            == {
-                forall l: Index
-                    ensures ((k: Index) => m(k)(l)) == ((k: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l))
-                    {
-                        FunEq((k: Index) => m(k)(l), 
-                              (k: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l));
-                    }
-                    FunEq((l: Index) => Sum((k: Index) => m(k)(l)), (l: Index) => Sum((k: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)));
-               }
-            Sum((l: Index) => Sum((k: Index) => m1(k)(l) * m2(k)(l) * m3(k)(l)));
         }
     }
 
@@ -243,7 +206,6 @@ lemma mult_assoc_ij(m1: Matrix, m2: Matrix, m3: Matrix, i: Index, j: Index)
         mult(m1, mult(m2, m3))(i)(j);
     }
 }
-
 
 lemma mult_assoc(m1: Matrix, m2: Matrix, m3: Matrix)
     ensures mult(mult(m1, m2), m3) == mult(m1, mult(m2, m3))
